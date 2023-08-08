@@ -1,9 +1,9 @@
 package com.spotify.Example.controller;
 
 import com.spotify.Example.KeysEnum;
+import com.spotify.Example.service.ApiService;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -13,11 +13,8 @@ import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
-import se.michaelthelin.spotify.model_objects.specification.Artist;
-import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
-import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUsersTopArtistsRequest;
 
 import java.io.IOException;
 import java.net.URI;
@@ -28,7 +25,7 @@ public class SpotifyController {
 
     private static final URI redirecUri = SpotifyHttpManager.makeUri("http://localhost:8080/api/get-user-code/");
 
-
+private final ApiService apiService;
 
 
     private String code = "";
@@ -39,6 +36,11 @@ public class SpotifyController {
             .setRedirectUri(redirecUri)
             .build();
 
+    @Autowired
+    public SpotifyController(ApiService apiService) {
+        this.apiService = apiService;
+    }
+
     @GetMapping("loginTeste")
     @ResponseBody
     public String spotifyLogin() {
@@ -48,6 +50,11 @@ public class SpotifyController {
                 .build();
         final URI uri = authorizationCodeUriRequest.execute();
         return uri.toString();
+    }
+
+    @GetMapping("testFlask")
+    public ResponseEntity<String> testFlask() {
+        return apiService.callFlaskApi();
     }
 
     @GetMapping(value = "get-user-code")
