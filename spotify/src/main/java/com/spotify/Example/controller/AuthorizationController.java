@@ -1,6 +1,6 @@
 package com.spotify.Example.controller;
 
-import com.spotify.Example.KeysEnum;
+import com.spotify.Example.enums.KeysEnum;
 import com.spotify.Example.service.SpotifyService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hc.core5.http.ParseException;
