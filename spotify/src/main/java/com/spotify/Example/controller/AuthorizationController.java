@@ -3,6 +3,7 @@ package com.spotify.Example.controller;
 import com.spotify.Example.enums.KeysEnum;
 import com.spotify.Example.service.SpotifyService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.apache.hc.core5.http.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -23,6 +24,9 @@ import se.michaelthelin.spotify.requests.data.personalization.simplified.GetUser
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Controller
 public class AuthorizationController {
@@ -67,42 +71,20 @@ public class AuthorizationController {
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
 
+            spotifyService.storeSession(spotifyApi);
+
         } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e) {
             e.printStackTrace();
         }
 
-        SavedTrack [] savedTracks = fetchSavedTracks();
+        SavedTrack [] savedTracks = spotifyService.getUserTracks(spotifyApi);
 
         response.sendRedirect("http://localhost:4200/top-artists");
-        spotifyService.saveTracks(savedTracks);
+//        spotifyService.saveTracks(savedTracks);
         return spotifyApi.getAccessToken();
     }
 
-    private SavedTrack[] fetchSavedTracks() throws IOException, ParseException, SpotifyWebApiException {
-        final GetUsersSavedTracksRequest getUsersSavedTracksRequest = spotifyApi.getUsersSavedTracks()
-                .build();
 
-        final Paging<SavedTrack> savedTrackPaging = getUsersSavedTracksRequest.execute();
-        return savedTrackPaging.getItems();
-    }
-
-    private Artist[] fetchUserTopArtists() {
-        final GetUsersTopArtistsRequest getUsersTopArtistsRequest = spotifyApi.getUsersTopArtists()
-                .time_range("medium_term")
-                .limit(10)
-                .offset(5)
-                .build();
-
-        try {
-            final Paging<Artist> artistPaging = getUsersTopArtistsRequest.execute();
-
-            return artistPaging.getItems();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return new Artist[0];
-    }
 
 
 
