@@ -11,6 +11,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
+import se.michaelthelin.spotify.model_objects.specification.SavedTrack;
+import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
 
 import java.io.IOException;
 
@@ -29,8 +32,8 @@ public class ScheduledTasks {
 
     @Scheduled(fixedDelay = 10000)
     public void scheduleFixedDelayTask() throws IOException, ParseException, SpotifyWebApiException {
-        Sort sort = Sort.by(Sort.Direction.ASC, "id");
-        SessionEntity session  = (SessionEntity) sessionRepository.findAll(sort).stream().findFirst().orElse(null);
+
+        SessionEntity session = spotifyService.getSession();
 
         if (session != null) {
             SpotifyApi spotifyApi = new SpotifyApi.Builder()
@@ -40,8 +43,25 @@ public class ScheduledTasks {
                     .setRefreshToken(session.getRefreshToken())
                     .build();
 
-            spotifyService.getUserTracks(spotifyApi);
+//
+
+            int numberTracks = spotifyService.getNumberOfSavedTracks(spotifyApi);
+            if(numberTracks == 0) {
+                //token expired : replace tokens
+                SpotifyApi newSpotifyApi = spotifyService.handleTokenExpired(spotifyApi);
+                // delete current token and save new token in database
+                spotifyService.storeSession(spotifyApi);
+
+                numberTracks = spotifyService.getNumberOfSavedTracks(newSpotifyApi);
+            }
+            //logic to compare currentTracks and saved tracks
+            System.out.println(numberTracks);
+
+            //get number of tracks in database
+
         }
+
+
 
     }
 }

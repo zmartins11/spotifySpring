@@ -77,10 +77,15 @@ public class AuthorizationController {
             e.printStackTrace();
         }
 
-        SavedTrack [] savedTracks = spotifyService.getUserTracks(spotifyApi);
+        try {
+            SavedTrack [] savedTracks = spotifyService.getUserTracks(spotifyApi);
+            spotifyService.saveTracks(savedTracks);
+        } catch (Exception e) {
+            System.out.println("error token expired");
+        }
 
         response.sendRedirect("http://localhost:4200/top-artists");
-//        spotifyService.saveTracks(savedTracks);
+
         return spotifyApi.getAccessToken();
     }
 
