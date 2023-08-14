@@ -194,4 +194,8 @@ public class SpotifyService {
 
         return spotifyApi;
     }
+
+    public int getNumberDbTracks() {
+        return (int) savedTrackRepository.count();
+    }
 }

@@ -16,6 +16,8 @@ import se.michaelthelin.spotify.model_objects.specification.SavedTrack;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Component
 public class ScheduledTasks {
@@ -45,9 +47,10 @@ public class ScheduledTasks {
 
 //
 
-            int numberTracks = spotifyService.getNumberOfSavedTracks(spotifyApi);
-            if(numberTracks == 0) {
-                //token expired : replace tokens
+            SavedTrack[] savedTrackList = spotifyService.getUserTracks(spotifyApi);
+            int numberTracks = savedTrackList.length;
+            if(numberTracks == 0) { //token expired : replace tokens
+
                 SpotifyApi newSpotifyApi = spotifyService.handleTokenExpired(spotifyApi);
                 // delete current token and save new token in database
                 spotifyService.storeSession(spotifyApi);
@@ -55,9 +58,17 @@ public class ScheduledTasks {
                 numberTracks = spotifyService.getNumberOfSavedTracks(newSpotifyApi);
             }
             //logic to compare currentTracks and saved tracks
-            System.out.println(numberTracks);
+            System.out.println("tracks in playlist: " + numberTracks);
 
             //get number of tracks in database
+            int savedDbTracks = spotifyService.getNumberDbTracks();
+            System.out.println("tracks in database : " + savedDbTracks);
+            if(savedDbTracks < numberTracks) {
+                int newSongs = numberTracks - savedDbTracks;
+                System.out.println("number of new songs:" + newSongs);
+                SavedTrack[] newSongsToAdd = Arrays.stream(savedTrackList).limit(newSongs).collect(Collectors.toList()).toArray(new SavedTrack[newSongs]);
+                spotifyService.saveTracks(newSongsToAdd);
+            }
 
         }
 
