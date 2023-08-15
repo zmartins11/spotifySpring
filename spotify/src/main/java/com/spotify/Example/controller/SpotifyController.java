@@ -17,9 +17,9 @@ private final ApiService apiService;
         this.apiService = apiService;
     }
 
-    @GetMapping("testFlask")
-    public ResponseEntity<String> testFlask() {
-        return apiService.callFlaskApi();
-    }
+//    @GetMapping("testFlask")
+//    public ResponseEntity<String> testFlask() {
+//        return apiService.callFlaskApi(newSongsToAdd);
+//    }
 
 }

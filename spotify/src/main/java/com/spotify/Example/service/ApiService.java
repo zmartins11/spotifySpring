@@ -9,8 +9,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.SavedTrack;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,21 +29,18 @@ public class ApiService {
         this.savedTrackRepository = savedTrackRepository;
     }
 
-    public ResponseEntity<String> callFlaskApi() {
+    public ResponseEntity<String> callFlaskApi(SavedTrack[] newSongsToAdd) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, String> data = new HashMap<>();
 
-        int count = 0;
         List<SavedTrackEntity> savedTrackList = savedTrackRepository.findAll();
-        for(SavedTrackEntity track : savedTrackList) {
-            data.put(track.getArtist(), track.getSongName());
-            count ++;
-            if (count > 5) {
-                break;
-            }
+        for(SavedTrack track : newSongsToAdd) {
+//            data.put(track.getArtist(), track.getSongName());
+            data.put(String.valueOf(Arrays.stream(track.getTrack().getArtists()).findFirst().map(ArtistSimplified::getName).orElse("")),
+                    track.getTrack().getName());
         }
         HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(data, headers);
 

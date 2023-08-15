@@ -3,6 +3,7 @@ package com.spotify.Example.cronJob;
 import com.spotify.Example.enums.KeysEnum;
 import com.spotify.Example.model.SessionEntity;
 import com.spotify.Example.repository.SessionRepository;
+import com.spotify.Example.service.ApiService;
 import com.spotify.Example.service.SpotifyService;
 import org.apache.hc.core5.http.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +25,13 @@ public class ScheduledTasks {
 
     private SessionRepository sessionRepository;
     private SpotifyService spotifyService;
+    private ApiService apiService;
 
     @Autowired
-    public ScheduledTasks(SessionRepository sessionRepository, SpotifyService spotifyService) {
+    public ScheduledTasks(SessionRepository sessionRepository, SpotifyService spotifyService, ApiService apiService) {
         this.sessionRepository = sessionRepository;
         this.spotifyService = spotifyService;
+        this.apiService = apiService;
     }
 
 
@@ -46,33 +49,40 @@ public class ScheduledTasks {
                     .build();
 
 //
-
-            SavedTrack[] savedTrackList = spotifyService.getUserTracks(spotifyApi);
-            int numberTracks = savedTrackList.length;
-            if(numberTracks == 0) { //token expired : replace tokens
+            SavedTrack[] savedTrackList = new SavedTrack[0];
+            int numberTracks = 0;
+            try {
+                savedTrackList = spotifyService.getUserTracks(spotifyApi);
+            } catch (Exception e) {
 
                 SpotifyApi newSpotifyApi = spotifyService.handleTokenExpired(spotifyApi);
-                // delete current token and save new token in database
                 spotifyService.storeSession(spotifyApi);
-
-                numberTracks = spotifyService.getNumberOfSavedTracks(newSpotifyApi);
             }
+
+            numberTracks = savedTrackList.length;
+
             //logic to compare currentTracks and saved tracks
             System.out.println("tracks in playlist: " + numberTracks);
 
             //get number of tracks in database
             int savedDbTracks = spotifyService.getNumberDbTracks();
             System.out.println("tracks in database : " + savedDbTracks);
+
             if(savedDbTracks < numberTracks) {
                 int newSongs = numberTracks - savedDbTracks;
                 System.out.println("number of new songs:" + newSongs);
                 SavedTrack[] newSongsToAdd = Arrays.stream(savedTrackList).limit(newSongs).collect(Collectors.toList()).toArray(new SavedTrack[newSongs]);
                 spotifyService.saveTracks(newSongsToAdd);
+                apiService.callFlaskApi(newSongsToAdd);
             }
 
         }
 
-
-
     }
+
+
+//    @Scheduled(fixedDelay = 1 * 60 * 1000)
+//    public void downloadSongs() {
+//        apiService.callFlaskApi();
+//    }
 }

@@ -6,6 +6,9 @@ from pytube import YouTube
 import urllib.request
 import re
 from urllib.parse import urlencode
+import os
+from yt_dlp import YoutubeDL
+from youtube_dl import YoutubeDL
 
 app = Flask(__name__)
 
@@ -15,10 +18,10 @@ app = Flask(__name__)
 def testSpring():
 
 	data = request.json
-	print(data)
 
 	for artist, song_name in data.items():
 		youtube_url = get_url_video(artist, song_name)
+		print(youtube_url)
 		if youtube_url:
 			download_song(youtube_url)
 
@@ -39,6 +42,10 @@ def get_url_video(artist, song_name):
 		return None
 	
 
+
+
 def download_song(youtube_url):
-	yt = YouTube(youtube_url)
-	yt.streams.filter(file_extension="mp4").get_by_resolution("360p").download("D:\codex-cuphead")
+    yt = YouTube(youtube_url)
+    yt.streams.filter(file_extension="mp4").get_by_resolution("360p").download("D:\songsVideos")
+
+	
