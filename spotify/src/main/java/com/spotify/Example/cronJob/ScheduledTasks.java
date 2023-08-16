@@ -1,5 +1,6 @@
 package com.spotify.Example.cronJob;
 
+import com.spotify.Example.DriveQuickstart;
 import com.spotify.Example.enums.KeysEnum;
 import com.spotify.Example.model.SessionEntity;
 import com.spotify.Example.repository.SessionRepository;
@@ -26,17 +27,21 @@ public class ScheduledTasks {
     private SessionRepository sessionRepository;
     private SpotifyService spotifyService;
     private ApiService apiService;
+    private DriveQuickstart driveQuickstart;
 
     @Autowired
-    public ScheduledTasks(SessionRepository sessionRepository, SpotifyService spotifyService, ApiService apiService) {
+    public ScheduledTasks(SessionRepository sessionRepository, SpotifyService spotifyService, ApiService apiService, DriveQuickstart driveQuickstart) {
         this.sessionRepository = sessionRepository;
         this.spotifyService = spotifyService;
         this.apiService = apiService;
+        this.driveQuickstart = driveQuickstart;
     }
 
 
     @Scheduled(fixedDelay = 10000)
     public void scheduleFixedDelayTask() throws IOException, ParseException, SpotifyWebApiException {
+
+        driveQuickstart.getCredentials();
 
         SessionEntity session = spotifyService.getSession();
 

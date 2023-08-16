@@ -79,7 +79,7 @@ public class AuthorizationController {
 
         try {
             SavedTrack [] savedTracks = spotifyService.getUserTracks(spotifyApi);
-            spotifyService.saveTracks(savedTracks);
+//            spotifyService.saveTracks(savedTracks);
         } catch (Exception e) {
             System.out.println("error token expired");
         }
