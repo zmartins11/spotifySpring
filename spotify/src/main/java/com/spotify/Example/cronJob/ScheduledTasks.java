@@ -1,21 +1,18 @@
 package com.spotify.Example.cronJob;
 
-import com.spotify.Example.DriveQuickstart;
 import com.spotify.Example.enums.KeysEnum;
 import com.spotify.Example.model.SessionEntity;
 import com.spotify.Example.repository.SessionRepository;
 import com.spotify.Example.service.ApiService;
+import com.spotify.Example.service.GDriveService;
 import com.spotify.Example.service.SpotifyService;
 import org.apache.hc.core5.http.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.specification.SavedTrack;
-import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,21 +24,20 @@ public class ScheduledTasks {
     private SessionRepository sessionRepository;
     private SpotifyService spotifyService;
     private ApiService apiService;
-    private DriveQuickstart driveQuickstart;
+    private GDriveService gDriveService;
+
 
     @Autowired
-    public ScheduledTasks(SessionRepository sessionRepository, SpotifyService spotifyService, ApiService apiService, DriveQuickstart driveQuickstart) {
+    public ScheduledTasks(SessionRepository sessionRepository, SpotifyService spotifyService, ApiService apiService, GDriveService gDriveService) {
         this.sessionRepository = sessionRepository;
         this.spotifyService = spotifyService;
         this.apiService = apiService;
-        this.driveQuickstart = driveQuickstart;
+        this.gDriveService = gDriveService;
     }
 
 
     @Scheduled(fixedDelay = 10000)
     public void scheduleFixedDelayTask() throws IOException, ParseException, SpotifyWebApiException {
-
-        driveQuickstart.getCredentials();
 
         SessionEntity session = spotifyService.getSession();
 
