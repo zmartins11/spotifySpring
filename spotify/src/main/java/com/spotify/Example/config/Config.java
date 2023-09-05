@@ -20,13 +20,6 @@ import java.util.Collections;
 @EnableScheduling
 public class Config {
 
-    @Value("${google.drive.clientId}")
-    private String clientId;
-
-    @Value("${google.drive.clientSecret}")
-    private String clientSecret;
-
-
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();

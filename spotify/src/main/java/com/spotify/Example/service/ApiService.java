@@ -12,10 +12,7 @@ import org.springframework.web.client.RestTemplate;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.SavedTrack;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class ApiService {
@@ -35,15 +32,26 @@ public class ApiService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, String> data = new HashMap<>();
+        Random random = new Random();
 
         List<SavedTrackEntity> savedTrackList = savedTrackRepository.findAll();
-        for(SavedTrack track : newSongsToAdd) {
-//            data.put(track.getArtist(), track.getSongName());
-            data.put(String.valueOf(Arrays.stream(track.getTrack().getArtists()).findFirst().map(ArtistSimplified::getName).orElse("")),
-                    track.getTrack().getName());
+        for (SavedTrack track : newSongsToAdd) {
+            String artistName = Arrays.stream(track.getTrack().getArtists())
+                    .findFirst()
+                    .map(ArtistSimplified::getName)
+                    .orElse("");
+            String trackName = track.getTrack().getName();
+
+            if (data.containsKey(artistName)) {
+                // If it is, append a random integer to the artist name
+                artistName = artistName + random.nextInt(1000);
+                data.put(artistName, trackName);
+            } else {
+                // If it's not, simply put the artist and track name in the map
+                data.put(artistName, trackName);
+            }
         }
         HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(data, headers);
-
         ResponseEntity<String> response = restTemplate.postForEntity("http://127.0.0.1:5000/testSpring", requestEntity, String.class);
         return response;
     }

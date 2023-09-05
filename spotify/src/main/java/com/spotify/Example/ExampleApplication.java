@@ -35,12 +35,10 @@ public class ExampleApplication implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
-//		spotifyService.formatMp4();
 
-		java.io.File originalFile = new java.io.File("D:\\songsVideos\\Elevation.mp4");
-		FileInputStream input = new FileInputStream(originalFile);
-		MultipartFile multipartFile = new MockMultipartFile("file",
-				originalFile.getName(), "text/plain", IOUtils.toByteArray(input));
-		gDriveService.uploadFile(multipartFile);
+
+//		gDriveService.uploadFile(multipartFile);
+
+		gDriveService.listFolderContent();
 	}
 }

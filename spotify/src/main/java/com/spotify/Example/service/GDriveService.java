@@ -10,7 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.Collections;
+import java.util.*;
+
 import com.google.api.services.drive.Drive;
 import java.security.GeneralSecurityException;
 import com.google.api.client.json.JsonFactory;
@@ -20,13 +21,8 @@ import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInsta
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.InputStreamContent;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
+
 import com.google.api.client.util.store.FileDataStoreFactory;
-import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -34,7 +30,6 @@ import com.google.api.services.drive.model.FileList;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.nio.file.Files;
-import java.util.List;
 
 
 @Service
@@ -59,6 +54,8 @@ public class GDriveService {
     private static final List<String> SCOPES =
             Collections.singletonList(DriveScopes.DRIVE_FILE);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+
+    private static final String folderId = "1qY9cyvxch_tRDDjByK27FMn7uDEhd0Ml";
 
 
 
@@ -100,7 +97,7 @@ public class GDriveService {
     }
 
 
-    public String uploadFile(MultipartFile file) throws IOException, GeneralSecurityException {
+    public String uploadFile(List<MultipartFile> multipartFiles) throws IOException, GeneralSecurityException {
 
 
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
@@ -109,23 +106,24 @@ public class GDriveService {
                 .build();
 
         try {
-            System.out.println(file.getOriginalFilename());
+            for(MultipartFile songsToAdd : multipartFiles) {
+                System.out.println(songsToAdd.getOriginalFilename());
+                if (null != songsToAdd) {
+                    File fileMetadata = new File();
+                    fileMetadata.setParents(Collections.singletonList(folderId));
+                    fileMetadata.setName(songsToAdd.getOriginalFilename());
+                    File uploadFile = getInstance()
+                            .files()
+                            .create(fileMetadata, new InputStreamContent(
+                                    songsToAdd.getContentType(),
+                                    new ByteArrayInputStream(songsToAdd.getBytes()))
+                            )
+                            .setFields("id").execute();
+                    System.out.println(uploadFile);
 
-            String folderId = "1qY9cyvxch_tRDDjByK27FMn7uDEhd0Ml";
-            if (null != file) {
-                File fileMetadata = new File();
-                fileMetadata.setParents(Collections.singletonList(folderId));
-                fileMetadata.setName(file.getOriginalFilename());
-                File uploadFile = getInstance()
-                        .files()
-                        .create(fileMetadata, new InputStreamContent(
-                                file.getContentType(),
-                                new ByteArrayInputStream(file.getBytes()))
-                        )
-                        .setFields("id").execute();
-                System.out.println(uploadFile);
-                return uploadFile.getId();
+                }
             }
+            return "success";
         } catch (Exception e) {
             System.out.printf("Error: "+ e);
         }
@@ -133,4 +131,53 @@ public class GDriveService {
     }
 
 
+    public  List<File> listFolderContent() throws GeneralSecurityException, IOException {
+        String query = "'" + folderId + "' in parents";
+        FileList result = getInstance().files().list()
+                .setQ(query)
+                .setPageSize(10)
+                .setFields("nextPageToken, files(id, name)")
+                .execute();
+        return result.getFiles();
+    }
+
+
+
+    public String getLastFilesAdded(int songsToAdd) throws IOException, GeneralSecurityException {
+
+        List<MultipartFile> songsToUpload = new ArrayList<>();
+
+        // Specify the path to the folder
+        String folderPath = "D:\\songsFormatMP3";
+
+        // Create a File object for the folder
+        java.io.File folder = new java.io.File(folderPath);
+        java.io.File[] files = folder.listFiles();
+
+        if (files != null && files.length >= songsToAdd) {
+            // Sort the files by last modified timestamp in descending order
+            Arrays.sort(files, Comparator.comparingLong(java.io.File::lastModified).reversed());
+
+            //List to save the last songs added
+            List<java.io.File> songsAdded = new ArrayList<>();
+
+            for(int i = 0; i < songsToAdd; i++) {
+                songsAdded.add(files[i]);
+            }
+
+            if (songsAdded != null && !songsAdded.isEmpty()) {
+
+                for (java.io.File song : songsAdded) {
+                    FileInputStream input = new FileInputStream(song);
+                    MultipartFile multipartFile = new MockMultipartFile("file",
+                            song.getName(), "text/plain", IOUtils.toByteArray(input));
+                    songsToUpload.add(multipartFile);
+                }
+            }
+        } else {
+            System.out.println("There are not enough files in the folder.");
+        }
+
+        return uploadFile(songsToUpload);
+    }
 }

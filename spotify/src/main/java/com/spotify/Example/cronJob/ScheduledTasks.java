@@ -15,6 +15,7 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.SavedTrack;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -36,8 +37,8 @@ public class ScheduledTasks {
     }
 
 
-    @Scheduled(fixedDelay = 10000)
-    public void scheduleFixedDelayTask() throws IOException, ParseException, SpotifyWebApiException {
+    @Scheduled(fixedRate = 3599000)
+    public void scheduleFixedDelayTask() throws IOException, ParseException, SpotifyWebApiException, GeneralSecurityException {
 
         SessionEntity session = spotifyService.getSession();
 
@@ -55,7 +56,7 @@ public class ScheduledTasks {
             try {
                 savedTrackList = spotifyService.getUserTracks(spotifyApi);
             } catch (Exception e) {
-
+                System.out.println("session Expired: getting refreshToken");
                 SpotifyApi newSpotifyApi = spotifyService.handleTokenExpired(spotifyApi);
                 spotifyService.storeSession(spotifyApi);
             }
@@ -75,15 +76,10 @@ public class ScheduledTasks {
                 SavedTrack[] newSongsToAdd = Arrays.stream(savedTrackList).limit(newSongs).collect(Collectors.toList()).toArray(new SavedTrack[newSongs]);
                 spotifyService.saveTracks(newSongsToAdd);
                 apiService.callFlaskApi(newSongsToAdd);
+                gDriveService.getLastFilesAdded(newSongs);
             }
 
         }
 
     }
-
-
-//    @Scheduled(fixedDelay = 1 * 60 * 1000)
-//    public void downloadSongs() {
-//        apiService.callFlaskApi();
-//    }
 }

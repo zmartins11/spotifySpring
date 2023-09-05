@@ -20,15 +20,26 @@ def testSpring():
 
 	data = request.json
 
-	for artist, song_name in data.items():
-		youtube_url = get_url_video(artist, song_name)
-		print(youtube_url)
-		if youtube_url:
-			video_path = download_song(youtube_url)
-			convert_to_mp3(video_path)
+	if data:
+		print(f"Number of songs to process: {len(data)}")
+		donwload_and_convert_songs(data)
+		return "Songs processed successfully"
+	else:
+		return "No data provided"
 
 
-	return "Songs processed successfully"
+def donwload_and_convert_songs(song_data):
+	for artist, song_name in song_data.items():
+		try:
+			youtube_url = get_url_video(artist, song_name)
+			print(youtube_url)
+			if youtube_url:
+				video_path = download_song(youtube_url)
+				convert_to_mp3(video_path)
+		except Exception as e:
+			print(f"An error occurred while processing {song_name}: {str(e)}")
+
+
 
 def get_url_video(artist, song_name):
 	query = f"{artist}{song_name}"
