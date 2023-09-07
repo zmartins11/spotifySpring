@@ -125,39 +125,6 @@ public class SpotifyService {
         return new Artist[0];
     }
 
-    public void formatMp4() {
-        String inputFolder = "D:\\codex-cuphead";
-		String outpuFolder = "D:\\songsFormatMP3";
-        String ffmpegPath = "C:\\ffmpeg\\bin\\ffmpeg.exe";
-
-        File inputDir = new File(inputFolder);
-        File [] videoFiles = inputDir.listFiles((dir, name) -> name.endsWith(".mp4"));
-
-
-        if (videoFiles != null) {
-            for (File videoFile : videoFiles) {
-                String inputFilePath = videoFile.getAbsolutePath();
-                String outputFilePath = outpuFolder + "\\" + videoFile.getName().replace(".mp4", ".mp3");
-
-                try {
-                    ProcessBuilder processBuilder = new ProcessBuilder(ffmpegPath, "-i", inputFilePath, outputFilePath);
-                    Process process = processBuilder.start();
-                    int exitCode = process.waitFor();
-
-                    if(exitCode == 0) {
-                        System.out.println("Convertion of " + videoFile.getName() + " completed successfully");
-                    } else {
-                        System.out.println("Convertion of " + videoFile.getName() + " failed with exit code: " + exitCode);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-         }
-
-    }
 
     public void storeSession(SpotifyApi spotifyApi) {
         SessionEntity sessionEntity = new SessionEntity();
@@ -183,11 +150,12 @@ public class SpotifyService {
 
         try {
             final AuthorizationCodeCredentials credentials = refreshRequest.execute();
-            String newAccessToken = credentials.getAccessToken();
-            String newRefreshToken = credentials.getRefreshToken();
 
-            spotifyApi.setAccessToken(newAccessToken);
-            spotifyApi.setRefreshToken(newRefreshToken);
+            spotifyApi.setAccessToken(credentials.getAccessToken());
+            spotifyApi.setRefreshToken(credentials.getRefreshToken());
+
+            storeSession(spotifyApi);
+
         } catch (Exception e) {
             e.printStackTrace();
         }

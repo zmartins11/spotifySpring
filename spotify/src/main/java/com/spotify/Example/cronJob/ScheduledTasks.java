@@ -37,7 +37,7 @@ public class ScheduledTasks {
     }
 
 
-    @Scheduled(fixedRate = 3599000)
+    @Scheduled(fixedRate = 30 * 60 * 1000)
     public void scheduleFixedDelayTask() throws IOException, ParseException, SpotifyWebApiException, GeneralSecurityException {
 
         SessionEntity session = spotifyService.getSession();
@@ -50,15 +50,19 @@ public class ScheduledTasks {
                     .setRefreshToken(session.getRefreshToken())
                     .build();
 
-//
-            SavedTrack[] savedTrackList = new SavedTrack[0];
+            SavedTrack[] savedTrackList = null;
             int numberTracks = 0;
+
             try {
                 savedTrackList = spotifyService.getUserTracks(spotifyApi);
+
+                if(savedTrackList == null || savedTrackList.length == 0) {
+                    System.out.println("session Expired: getting refreshToken");
+                    SpotifyApi newSpotifyApi = spotifyService.handleTokenExpired(spotifyApi);
+                    savedTrackList = spotifyService.getUserTracks(newSpotifyApi);
+                }
             } catch (Exception e) {
-                System.out.println("session Expired: getting refreshToken");
-                SpotifyApi newSpotifyApi = spotifyService.handleTokenExpired(spotifyApi);
-                spotifyService.storeSession(spotifyApi);
+                e.printStackTrace();
             }
 
             numberTracks = savedTrackList.length;
