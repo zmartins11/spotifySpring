@@ -60,7 +60,6 @@ public class AuthorizationController {
 
     @GetMapping("/get-user-code")
     public String getSpotifyUserCode(@RequestParam("code") String userCode, HttpServletResponse response) throws IOException, ParseException, SpotifyWebApiException {
-        String a ="teste";
         code = userCode;
         AuthorizationCodeRequest authorizationCodeRequest = spotifyApi.authorizationCode(code)
                 .build();
@@ -71,7 +70,7 @@ public class AuthorizationController {
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
 
-            spotifyService.storeSession(spotifyApi);
+            spotifyService.storeSession(spotifyApi, null);
 
         } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e) {
             e.printStackTrace();
@@ -90,6 +89,11 @@ public class AuthorizationController {
     }
 
 
+    @GetMapping("test")
+    @ResponseBody
+    public String testDocker() {
+        return "testing docker";
+    }
 
 
 

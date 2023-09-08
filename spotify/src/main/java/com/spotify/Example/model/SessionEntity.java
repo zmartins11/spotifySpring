@@ -17,6 +17,8 @@ public class SessionEntity {
     private String secretId;
     private String accessToken;
     private String refreshToken;
+    private Long timestamp;
+
 
 
 }

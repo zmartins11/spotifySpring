@@ -7,6 +7,8 @@ import com.spotify.Example.service.ApiService;
 import com.spotify.Example.service.GDriveService;
 import com.spotify.Example.service.SpotifyService;
 import org.apache.hc.core5.http.ParseException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class ScheduledTasks {
+
+    Logger logger = LogManager.getLogger(ScheduledTasks.class);
 
     private SessionRepository sessionRepository;
     private SpotifyService spotifyService;
@@ -41,6 +45,7 @@ public class ScheduledTasks {
     public void scheduleFixedDelayTask() throws IOException, ParseException, SpotifyWebApiException, GeneralSecurityException {
 
         SessionEntity session = spotifyService.getSession();
+        long tokenTime = session.getTimestamp();
 
         if (session != null) {
             SpotifyApi spotifyApi = new SpotifyApi.Builder()
@@ -55,28 +60,32 @@ public class ScheduledTasks {
 
             try {
                 savedTrackList = spotifyService.getUserTracks(spotifyApi);
-
-                if(savedTrackList == null || savedTrackList.length == 0) {
-                    System.out.println("session Expired: getting refreshToken");
-                    SpotifyApi newSpotifyApi = spotifyService.handleTokenExpired(spotifyApi);
-                    savedTrackList = spotifyService.getUserTracks(newSpotifyApi);
-                }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println("The access token expired");
+                logger.info("The access token expired");
+            }
+
+            if(savedTrackList == null || savedTrackList.length == 0) {
+                System.out.println("getting refreshToken");
+                SpotifyApi newSpotifyApi = spotifyService.handleTokenExpired(spotifyApi, tokenTime, session.getRefreshToken());
+                savedTrackList = spotifyService.getUserTracks(newSpotifyApi);
             }
 
             numberTracks = savedTrackList.length;
 
             //logic to compare currentTracks and saved tracks
             System.out.println("tracks in playlist: " + numberTracks);
+            logger.info("tracks in playlist: " + numberTracks);
 
             //get number of tracks in database
             int savedDbTracks = spotifyService.getNumberDbTracks();
             System.out.println("tracks in database : " + savedDbTracks);
+            logger.info("tracks in database : " + savedDbTracks);
 
             if(savedDbTracks < numberTracks) {
                 int newSongs = numberTracks - savedDbTracks;
                 System.out.println("number of new songs:" + newSongs);
+                logger.info("number of new songs:" + newSongs);
                 SavedTrack[] newSongsToAdd = Arrays.stream(savedTrackList).limit(newSongs).collect(Collectors.toList()).toArray(new SavedTrack[newSongs]);
                 spotifyService.saveTracks(newSongsToAdd);
                 apiService.callFlaskApi(newSongsToAdd);

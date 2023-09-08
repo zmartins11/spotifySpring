@@ -1,11 +1,14 @@
 package com.spotify.Example.service;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.drive.model.File;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,16 +27,15 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import org.springframework.mock.web.MockMultipartFile;
 
-import java.nio.file.Files;
-
 
 @Service
 public class GDriveService {
+
+    Logger logger = LogManager.getLogger(GDriveService.class);
 
     /**
      * Application name.
@@ -56,7 +58,6 @@ public class GDriveService {
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
     private static final String folderId = "1qY9cyvxch_tRDDjByK27FMn7uDEhd0Ml";
-
 
 
     /**
@@ -83,7 +84,7 @@ public class GDriveService {
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setHost("localhost").setPort(8089).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("daniel98bm@gmail.com");
+        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("");
     }
 
 
@@ -108,6 +109,7 @@ public class GDriveService {
         try {
             for(MultipartFile songsToAdd : multipartFiles) {
                 System.out.println(songsToAdd.getOriginalFilename());
+                logger.info(songsToAdd.getOriginalFilename());
                 if (null != songsToAdd) {
                     File fileMetadata = new File();
                     fileMetadata.setParents(Collections.singletonList(folderId));
@@ -176,6 +178,7 @@ public class GDriveService {
             }
         } else {
             System.out.println("There are not enough files in the folder.");
+            logger.error("There are not enough files in the folder.");
         }
 
         return uploadFile(songsToUpload);

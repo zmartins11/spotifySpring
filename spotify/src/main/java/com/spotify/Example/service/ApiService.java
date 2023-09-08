@@ -2,6 +2,8 @@ package com.spotify.Example.service;
 
 import com.spotify.Example.model.SavedTrackEntity;
 import com.spotify.Example.repository.SavedTrackRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +18,8 @@ import java.util.*;
 
 @Service
 public class ApiService {
+
+    Logger logger = LogManager.getLogger(ApiService.class);
 
     private final RestTemplate restTemplate;
     private final SavedTrackRepository savedTrackRepository;
@@ -53,6 +57,8 @@ public class ApiService {
         }
         HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(data, headers);
         ResponseEntity<String> response = restTemplate.postForEntity("http://127.0.0.1:5000/testSpring", requestEntity, String.class);
+        logger.info(response);
+
         return response;
     }
 }

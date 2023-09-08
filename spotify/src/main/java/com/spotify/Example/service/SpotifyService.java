@@ -126,13 +126,19 @@ public class SpotifyService {
     }
 
 
-    public void storeSession(SpotifyApi spotifyApi) {
+    public void storeSession(SpotifyApi spotifyApi, String initialRefreshToken) {
         SessionEntity sessionEntity = new SessionEntity();
+        long currentTimestampMillis = System.currentTimeMillis() / 1000;
 
         sessionRepository.deleteAll();
 
         sessionEntity.setAccessToken(spotifyApi.getAccessToken());
-        sessionEntity.setRefreshToken(spotifyApi.getRefreshToken());
+        if(spotifyApi.getRefreshToken() != null && !spotifyApi.getRefreshToken().isEmpty()) {
+            sessionEntity.setRefreshToken(spotifyApi.getRefreshToken());
+        } else {
+            sessionEntity.setRefreshToken(initialRefreshToken);
+        }
+        sessionEntity.setTimestamp(currentTimestampMillis);
 
         sessionRepository.save(sessionEntity);
     }
@@ -143,24 +149,37 @@ public class SpotifyService {
         return session;
     }
 
-    public SpotifyApi handleTokenExpired(SpotifyApi spotifyApi) throws IOException, ParseException, SpotifyWebApiException {
-        AuthorizationCodeRefreshRequest refreshRequest = spotifyApi.authorizationCodeRefresh()
-                .refresh_token(spotifyApi.getRefreshToken())
-                .build();
+    public SpotifyApi handleTokenExpired(SpotifyApi spotifyApi, Long tokenTime, String initialRefreshToken) throws IOException, ParseException, SpotifyWebApiException {
 
-        try {
-            final AuthorizationCodeCredentials credentials = refreshRequest.execute();
+        if(isAccessTokenAboutToExpire(spotifyApi, tokenTime)) {
+            AuthorizationCodeRefreshRequest refreshRequest = spotifyApi.authorizationCodeRefresh()
+                    .refresh_token(spotifyApi.getRefreshToken())
+                    .build();
 
-            spotifyApi.setAccessToken(credentials.getAccessToken());
-            spotifyApi.setRefreshToken(credentials.getRefreshToken());
+            try {
+                final AuthorizationCodeCredentials credentials = refreshRequest.execute();
 
-            storeSession(spotifyApi);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+                spotifyApi.setAccessToken(credentials.getAccessToken());
+                spotifyApi.setRefreshToken(credentials.getRefreshToken());
+
+                storeSession(spotifyApi, initialRefreshToken);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
         return spotifyApi;
+    }
+
+    private boolean isAccessTokenAboutToExpire(SpotifyApi spotifyApi, Long tokenTime) {
+        // Define a threshold (e.g., 5 minutes) before the access token expiration time
+        long thresholdInSeconds = 300; // 5 minutes
+        long currentTimestampInSeconds = System.currentTimeMillis() / 1000;
+        long expirationTimestampInSeconds = tokenTime;
+
+        // Check if the access token will expire within the threshold
+        return (expirationTimestampInSeconds - currentTimestampInSeconds) <= thresholdInSeconds;
     }
 
     public int getNumberDbTracks() {
